@@ -1,21 +1,9 @@
+import numpy as np
+import cv2
+import matplotlib.pyplot as plt
+from utils import getModelKeypointsDescriptors
+import constants
 '''
-
-punto numero uno da rivedere
-
-----------------------------
-STEP 2 Multiple Instance Detection:
-Test on scene image: {m1.png, m2.png, m3.png, m4.png, m5.png}
-Use product images: {0.jpg, 1.jpg, 11.jpg, 19.jpg, 24.jpg, 26.jpg, 25.jpg}
-
-
-In addition to what achieved at step A, the system should now be able to detect multiple instance of the
-same product. Purposely, students may deploy local invariant feature together with the GHT (Generalized
-Hough Transform). More precisely, rather than relying on the usual R-Table, the object model acquired at
-training time should now consist in vectors joining all the features extracted in the model image to their
-barycenter; then, at run time all the image features matched with respect to the model would cast votes
-for the position of the barycenter by scaling appropriately the associated joining vectors (i.e. by the ratio of
-sizes between the matching features).
-
 #STEP 2  
 STEP 2 Multiple Instance Detection:
 Test on scene image: {m1.png, m2.png, m3.png, m4.png, m5.png}
@@ -29,30 +17,61 @@ training time should now consist in vectors joining all the features extracted i
 barycenter; then, at run time all the image features matched with respect to the model would cast votes
 for the position of the barycenter by scaling appropriately the associated joining vectors (i.e. by the ratio of
 sizes between the matching features).
+'''
 
+scene_2 = ['m1.png', 'm2.png', 'scenes/m3.png', 'm4.png', 'm5.png']
+product_2 = ['0.jpg', '1.jpg', '11.jpg', '19.jpg', '24.jpg', '26.jpg', '25.jpg']
+#scene_2 = ['object_detection_project/scenes/m1.png', 'object_detection_project/scenes/m2.png', 'object_detection_project/scenes/m3.png', 'object_detection_project/scenes/m4.png', 'object_detection_project/scenes/m5.png']
+#product_2 = ['object_detection_project/models/0.jpg', 'object_detection_project/models/1.jpg', 'object_detection_project/models/11.jpg', 'object_detection_project/models/19.jpg', 'object_detection_project/models/24.jpg', 'object_detection_project/models/26.jpg', 'object_detection_project/models/25.jpg']
 
-scene_2 = ['object_detection_project/scenes/m1.png', 'object_detection_project/scenes/m2.png', 'object_detection_project/scenes/m3.png', 'object_detection_project/scenes/m4.png', 'object_detection_project/scenes/m5.png']
-product_2 = ['object_detection_project/models/0.jpg', 'object_detection_project/models/1.jpg', 'object_detection_project/models/11.jpg', 'object_detection_project/models/19.jpg', 'object_detection_project/models/24.jpg', 'object_detection_project/models/26.jpg', 'object_detection_project/models/25.jpg']
-
-sift = cv2.SIFT_create()
-
-for prod_img in product_2:
-    model_img = cv2.imread(prod_img, cv2.IMREAD_GRAYSCALE)
-
-    keypoints_model, descriptors_model = sift.detectAndCompute(model_img, None)
+def find_instances(scene_2, product_2, threshold=0.75, min_matches=131):
     
-    for scene_img2 in scene_2:
+    sift = cv2.SIFT_create()
 
-        scene = cv2.imread(scene_img2, cv2.IMREAD_GRAYSCALE)
+    scene = cv2.imread(scene_2, cv2.IMREAD_GRAYSCALE)
+    keypoints_scene, descriptors_scene = sift.detectAndCompute(scene, None)
 
-        keypoints_scene, descriptors_scene = sift.detectAndCompute(scene, None)
+    count = {}
 
-        vectors_model = np.array([keypoint.pt for keypoint in keypoints_model])
-        vectors_scene = np.array([keypoint.pt for keypoint in keypoints_scene])
+
+    for prod_img in product_2:
+        product = cv2.imread(prod_img, cv2.IMREAD_GRAYSCALE)
+
+        keypoints_prod, descriptors_prod = sift.detectAndCompute(product, None)
         
+        # Matcher descrittori metodo FLANN
+        FLANN_INDEX_KDTREE = 1
+        index_params = dict(algorithm=FLANN_INDEX_KDTREE, trees=5)
+        search_params = dict(checks=300)
+        flann = cv2.FlannBasedMatcher(index_params, search_params)
+
+        matches = flann.knnMatch(descriptors_prod, descriptors_scene, k=2)
+            #creare vettori
+            #vectors_prod = np.array([keypoint.pt for keypoint in keypoints_prod])
+            #vectors_scene = np.array([keypoint.pt for keypoint in keypoints_scene])
+        
+        good_matches = []
+        for m, n in matches:
+            if m.distance < threshold * n.distance:
+                good_matches.append(m)
+        
+        if len(good_matches) >= min_matches:
+            count[product_2] = len(good_matches)
+    
+    return count    
+
+for scenes in scene_2:
+    print(f"scena: {scenes}")
+
+    count = find_instances(scenes, product_2)
+
+    for product_2,  instances in count.items():
+        print(f"Prodotto: {product_2}, Istanze trovate: {instances}")
+    
+    print("") 
         #-----------------------------
 
-
+'''
         def match_and_vote(scene_image, model_image_centroid, model_image_vectors):
             sift = cv2.SIFT_create()
             keypoints, descriptors = sift.detectAndCompute(scene_image, None)
@@ -114,7 +133,5 @@ for prod_img in product_2:
         cv2.waitKey(0)
         cv2.destroyAllWindows()
 
-
-#fa schifo
-
 '''
+#----------------------------------------
