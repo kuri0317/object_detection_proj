@@ -1,8 +1,6 @@
 import numpy as np
 import cv2
-import matplotlib.pyplot as plt
 from utils import getModelKeypointsDescriptors
-import constants
 '''
 #STEP 2  
 STEP 2 Multiple Instance Detection:
@@ -60,6 +58,9 @@ def find_instances(scene_2, product_2, threshold=0.75, min_matches=300, max_vect
 
                 centroid = np.mean([keypoint.pt for keypoint in keypoints_prod], axis=0)
                 edge_vectors = [keypoint.pt -centroid for keypoint in keypoints_prod]
+                img_matches = cv2.drawMatches(product,keypoints_prod, scene_img, keypoints_scene, good_matches, None, flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
+                cv2.imshow('Matches', img_matches)
+                cv2.waitKey(0)
 
                 if len(edge_vectors)> max_vect : #controllare che non si stampino troppi vettori
                     edge_vectors= edge_vectors[:max_vect]
@@ -80,8 +81,6 @@ def find_instances(scene_2, product_2, threshold=0.75, min_matches=300, max_vect
         count [scene]= scene_count
     
     return count    
-
-
 
 count = find_instances(scene_2,product_2, max_vect=10)
 
