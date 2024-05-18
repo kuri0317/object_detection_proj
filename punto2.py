@@ -88,18 +88,18 @@ def find_instances(scene_paths, product_paths, threshold=0.75, min_matches=200, 
                 else: 
                     print(f"detection fail")
 
-                    #update
-                    if prod_path in scene_count:
-                        scene_count[prod_path]['n_instance'] += 1
-                    else:
-                        if len(edge_vectors)>max_vectors:
-                            edge_vectors=edge_vectors[:max_vectors]
-                        scene_count[prod_path] = {
-                            'n_instance': 1,
-                            'centroid': centroid,
-                            'edge_vectors': edge_vectors
-                        }
-                    print(f"numero istanze trovate {scene_count}")
+                #update
+                if prod_path in scene_count:
+                    scene_count[prod_path]['n_instance'] += 1
+                else:
+                    if len(edge_vectors)>max_vectors:
+                        edge_vectors=edge_vectors[:max_vectors]
+                    scene_count[prod_path] = {
+                        'n_instance': 1,
+                        'centroid': centroid,
+                        'edge_vectors': edge_vectors
+                    }
+            print(f"numero istanze trovate {scene_count}")
         counts[scene_path] = scene_count
 
     return counts
@@ -111,10 +111,11 @@ product_paths = ['object_detection_project/models/0.jpg', 'object_detection_proj
 counts = find_instances(scene_paths, product_paths, threshold=0.75, min_matches=200, max_vectors=10)
 
 # Print results
+'''
 for scene_path, scene_count in counts.items():
     print(f"Scene: {scene_path}")
     for prod_path, data in scene_count.items():
         print(f"Product: {prod_path}")
         print(f"Instances found: {data['n_instance']}")
         print(f"Product centroid: {data['centroid']}")
-        print(f"Edge vectors: {data['edge_vectors']}")
+        print(f"Edge vectors: {data['edge_vectors']}")'''
