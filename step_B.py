@@ -1,8 +1,8 @@
 import numpy as np
-import cv2
+import cv2 as cv
+import constants
 from utils import getModelKeypointsDescriptors
-from sklearn.cluster import DBSCAN
-import matplotlib.pyplot as plt
+from utils import  compute_ght_SIFT
 
 '''
 #STEP 2  
@@ -20,119 +20,103 @@ for the position of the barycenter by scaling appropriately the associated joini
 sizes between the matching features).
 '''
 
-#scene_2 = ['m1.png', 'm2.png', 'scenes/m3.png', 'm4.png', 'm5.png']
-#product_2 = ['0.jpg', '1.jpg', '11.jpg', '19.jpg', '24.jpg', '26.jpg', '25.jpg']
-scene_2 = ['object_detection_project/scenes/m1.png', 'object_detection_project/scenes/m2.png', 'object_detection_project/scenes/m3.png', 'object_detection_project/scenes/m4.png', 'object_detection_project/scenes/m5.png']
-product_2 = ['object_detection_project/models/0.jpg', 'object_detection_project/models/1.jpg', 'object_detection_project/models/11.jpg', 'object_detection_project/models/19.jpg', 'object_detection_project/models/24.jpg', 'object_detection_project/models/26.jpg', 'object_detection_project/models/25.jpg']
+scenes = ['m1.png', 'm2.png', 'm3.png', 'm4.png', 'm5.png']
+model_images = ['0.jpg', '1.jpg', '11.jpg', '19.jpg', '24.jpg', '26.jpg', '25.jpg']
 
-def find_instances(scene_2, product_2, threshold=0.75, min_matches=150, max_vect=5):
+
     
-    sift = cv2.SIFT_create()
-    count = {}
 
-    for scene in scene_2:
+def find_instances(scenes,model_images):
+    
+    sift = cv.SIFT_create()
 
-        scene_img = cv2.imread(scene, cv2.IMREAD_GRAYSCALE)
+    # compute descriptors on model images
+    models = getModelKeypointsDescriptors(model_images)
+
+    for scene in scenes:
+
+        # read scene image file and compute keypoints and SIFT descriptor
+        scene_img = cv.imread(constants.SCENES_PATH +'/' + scene, cv.IMREAD_GRAYSCALE)
         keypoints_scene, descriptors_scene = sift.detectAndCompute(scene_img, None)
-        scene_count ={}
-    
-        for prod_img in product_2:
-            
-            product = cv2.imread(prod_img, cv2.IMREAD_GRAYSCALE)
-            keypoints_prod, descriptors_prod = sift.detectAndCompute(product, None)
-            
-            # Matcher metodo FLANN
-            FLANN_INDEX_KDTREE = 1
-            index_params = dict(algorithm=FLANN_INDEX_KDTREE, trees=5)
-            search_params = dict(checks=50)
-            flann = cv2.FlannBasedMatcher(index_params, search_params)
-
-            matches = flann.knnMatch(descriptors_prod, descriptors_scene, k=2)
-
-            good_matches = []
-            for m, n in matches:
-                if m.distance < threshold * n.distance:
-                    good_matches.append(m)
         
-            if len(good_matches) >= min_matches:
+        for model in models:
 
-                centroid = np.mean([keypoint.pt for keypoint in keypoints_prod], axis=0)
-                edge_vectors = [keypoint.pt -centroid for keypoint in keypoints_prod]
-                scene_centroid = np.mean([keypoint.pt for keypoint in keypoints_scene], axis=0)
-                scene_vectors = [keypoint.pt -centroid for keypoint in keypoints_scene] #calcolo vettori e baricentri
-               
-                #ght
-                ght= cv2.createGeneralizedHoughBallard()
-                ght.setTemplate(product)
-                detections = ght.detect(scene_img)
-              
-                if detections is not None:
+            compute_ght_SIFT(model=model,target_keypoints=keypoints_scene,target_descriptors=descriptors_scene,target_image_size=scene_img.shape)
 
-                    #serve accumulatore per voti? conviene fare funzione a parte?
-                    votes = np.zeros_like( centroid )
 
-                    for q_vec in edge_vectors:
-                        for m_vec in scene_vectors:
-                            # Calcola la trasformazione scalando il vettore modello in base al vettore di query
-                            scale_factor = np.linalg.norm(q_vec) / np.linalg.norm(m_vec)
-                            transformed_vector = m_vec * scale_factor
-                            
-                            # Calcola la posizione del baricentro traslato e vota
-                            vote_position = scene_centroid + transformed_vector 
-                            votes += vote_position
-                            #vedi dove stampare i voti
 
-                    scene_with_instances= cv2.cvtColor(scene_img, cv2.COLOR_GRAY2BGR)
-                    for detection in detections:
-                        for point in detection['pos']:
-                            x, y = int(point[0]), int(point[1])
-                            w, h = product.shape[::-1]
-                            cv2.rectangle(scene_with_instances, (x, y), (x + w, y + h), (0, 255, 0), 2) #disegniamo i riquadri
-                    
-                    cv2.imshow('Scene with instances', scene_with_instances)
-                    cv2.waitKey(0)
+            ########################OLD
+            ## filter correspondencies based on distance thresholding
+            #good_matches = []
+            #for m, n in matches:
+            #    if m.distance < threshold * n.distance:
+            #        good_matches.append(m)
+            #
+            ## check if there are enough correspondencies between model image and target
+            #if len(good_matches) >= min_matches:
 
-                else:
-                    print ("rilevazione non valida")
+            #    #scene_centroid = np.mean([keypoint.pt for keypoint in keypoints_scene], axis=0)
+            #    #scene_vectors = [keypoint.pt -centroid for keypoint in keypoints_scene] #calcolo vettori e baricentri
+            #   
+            #    #run ght on the scene image
+            #    ght= cv.createGeneralizedHoughBallard()
+            #    ght.setTemplate(model['model_img'])
+            #    positions, votes = ght.detect(scene_img)
+            #    if positions != None:
 
-                if prod_img in scene_count:
-                    scene_count[prod_img]['n_instance'] += 1
-                else:
-                    scene_count[prod_img] = {
-                        'n_instance': 1,
-                        'centroid': centroid,
-                        'edge_vectors': edge_vectors
-                    }
-           '''
-            # Disegna
-            scene_centroids = product.copy()
-            cv2.circle(scene_centroids, tuple(map(int, centroid)), 10, (0, 255, 0), -1)
+            #        # Disegna
+            #        scene_centroids = product.copy()
+            #        cv.circle(model['model_img'], tuple(map(int, centroid)), 10, (0, 255, 0), -1)
+            #            
+            #        cv.imshow('scena con baricentri e vettori', scene_centroids)
+            #        cv.waitKey(0)
+            #        cv.destroyAllWindows()
+
+            #        if len(edge_vectors)> max_vect : #controllare che non si stampino troppi vettori
+            #            edge_vectors= edge_vectors[:max_vect]
+
+
+
+
+            #    else:
+            #        print ("rilevazione non valida")
+
+            #    #if model['model_name'] in scene_count:
+            #    #    scene_count[model['model_name']]['n_instance'] += 1
+            #    #else:
+            #    #    scene_count[model['model_name']] = {
+            #    #        'n_instance': 1,
+            #    #        'centroid': model['centroid'],
+            #    #        'edge_vectors': model['edge_vectors']
+            #    #    }
+            #'''
+            ## Disegna
+            #scene_centroids = product.copy()
+            #cv.circle(scene_centroids, tuple(map(int, centroid)), 10, (0, 255, 0), -1)
+            #    
+            #cv.imshow('scena con baricentri e vettori', scene_centroids)
+            #cv.waitKey(0)
+            #cv.destroyAllWindows()
+
+            #if len(edge_vectors)> max_vect : #controllare che non si stampino troppi vettori
+            #    edge_vectors= edge_vectors[:max_vect]
+            #
+            #'''
                 
-            cv2.imshow('scena con baricentri e vettori', scene_centroids)
-            cv2.waitKey(0)
-            cv2.destroyAllWindows()
 
-            if len(edge_vectors)> max_vect : #controllare che non si stampino troppi vettori
-                edge_vectors= edge_vectors[:max_vect]'''
-                
-        count [scene]= scene_count
-    
-    cv2.destroyAllWindows()
-    return count    
-
-count = find_instances(scene_2,product_2,threshold=0.75, min_matches=150, max_vect=5)
+find_instances(scenes,model_images)
 
 
-for scene, scene_count in count.items():
-    print(f"Scena: {scene}")
-
-    for prod_img, c in scene_count.items():
-        print(f"Prodotto: {prod_img}")
-        print(f"Istanze trovate: {c['n_instance']}")
-        print(f"Baricentro del prodotto: {c['centroid']}")
-        print(f"Vettori degli edge al baricentro ( {len(c['edge_vectors'])} max vettori)")
-        for vector in c['edge_vectors']:
-            print(vector)
-        print("")  # Stampa una riga vuota per separare le informazioni dei prodotti
-    print("")  # Stampa una riga vuota per separare le informazioni delle scene
+#for scene, scene_count in count.items():
+#    print(f"Scena: {scene}")
+#
+#    for prod_img, c in scene_count.items():
+#        print(f"Prodotto: {prod_img}")
+#        print(f"Istanze trovate: {c['n_instance']}")
+#        print(f"Baricentro del prodotto: {c['centroid']}")
+#        print(f"Vettori degli edge al baricentro ( {len(c['edge_vectors'])} max vettori)")
+#        for vector in c['edge_vectors']:
+#            print(vector)
+#        print("")  # Stampa una riga vuota per separare le informazioni dei prodotti
+#    print("")  # Stampa una riga vuota per separare le informazioni delle scene
 
