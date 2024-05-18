@@ -16,47 +16,33 @@ def compute_linking_vectors(keypoints, centroid):
     vectors = [kp.pt - centroid for kp in keypoints]
     return vectors
 
-def generalized_hough_transform(model_img, scene_img, threshold=0.75):
-    # Step 1: Compute keypoints and descriptors for the model image
-    keypoints_model, descriptors_model = compute_keypoints_descriptors(model_img)
-    centroid_model = compute_centroid(keypoints_model)
-    linking_vectors = compute_linking_vectors(keypoints_model, centroid_model)
-    
-    # Step 2: Compute keypoints and descriptors for the scene image
-    keypoints_scene, descriptors_scene = compute_keypoints_descriptors(scene_img)
+def generalized_hough_transform(keypoints_scene, keypoints_prod, descriptors_scene, descriptors_prod, centroid, threshold=0.75):
+    # FLANN matcher
+    flann = cv2.FlannBasedMatcher()
+    matches = flann.knnMatch(descriptors_prod, descriptors_scene, k=2)
 
-    # Step 3: Match descriptors between model and scene
-    bf = cv2.BFMatcher(cv2.NORM_L2)
-    matches = bf.knnMatch(descriptors_model, descriptors_scene, k=2)
-    
     good_matches = []
     for m, n in matches:
         if m.distance < threshold * n.distance:
             good_matches.append(m)
-    
     print(f"Number of good matches: {len(good_matches)}")
 
-    if len(good_matches) == 0:
-        return None, 0
-
-    # Step 4: Accumulator for votes
+    # Build accumulator
     accumulator = defaultdict(int)
-    
     for match in good_matches:
-        model_idx = match.queryIdx
-        scene_idx = match.trainIdx
-        
-        model_kp = keypoints_model[model_idx]
-        scene_kp = keypoints_scene[scene_idx]
-        
-        model_vector = linking_vectors[model_idx]
-        scale = scene_kp.size / model_kp.size
-        rotated_vector = scale * model_vector
-        
-        scene_centroid = np.array(scene_kp.pt) - rotated_vector
-        accumulator[tuple(scene_centroid)] += 1
+        kp_scene = keypoints_scene[match.trainIdx]
+        kp_prod = keypoints_prod[match.queryIdx]
 
-    # Step 5: Find the position with the highest votes
+        # Calculate the position of the centroid in the scene image
+        dx = kp_scene.pt[0] - kp_prod.pt[0]
+        dy = kp_scene.pt[1] - kp_prod.pt[1]
+
+        # Accumulate votes
+        pos = (int(dx + centroid[0]), int(dy + centroid[1]))
+        accumulator[pos] += 1
+     
+
+    # Find the maximum votes in the accumulator
     if accumulator:
         max_votes = max(accumulator.values())
         possible_centroids = [pos for pos, votes in accumulator.items() if votes == max_votes]
@@ -65,46 +51,55 @@ def generalized_hough_transform(model_img, scene_img, threshold=0.75):
     else:
         return None, 0
 
-def find_instances(scene_paths, product_paths, threshold=0.75, min_matches=150, max_vectors=5):
+def find_instances(scene_paths, product_paths, threshold=0.75, min_matches=200, max_vectors=10):
     counts = {}
 
     for scene_path in scene_paths:
+        print(f"searching in Scene: {scene_path}")
         scene_img = cv2.imread(scene_path, cv2.IMREAD_GRAYSCALE)
+        keypoints_scene, descriptors_scene= compute_keypoints_descriptors(scene_img)
+
         scene_count = {}
 
         for prod_path in product_paths:
+            print(f"analizzando Prodotto: {prod_path}")
             product_img = cv2.imread(prod_path, cv2.IMREAD_GRAYSCALE)
-            possible_centroids, max_votes = generalized_hough_transform(product_img, scene_img, threshold)
+            keypoints_prod, descriptors_prod= compute_keypoints_descriptors(product_img)
+            cv2.imshow('prodotto cercato', product_img)
+            cv2.waitKey(0)
+            if len(keypoints_prod)>=min_matches:
 
-            if max_votes >= min_matches:
-                centroid = compute_centroid(compute_keypoints_descriptors(product_img)[0])
-                edge_vectors = compute_linking_vectors(compute_keypoints_descriptors(product_img)[0], centroid)
+                centroid=compute_centroid(keypoints_prod)
+                edge_vectors=compute_linking_vectors(keypoints_prod, centroid)
+#GHT
+                possible_centroids, max_votes = generalized_hough_transform(keypoints_scene, keypoints_prod, descriptors_scene, descriptors_prod, centroid, threshold)
 
-                if len(edge_vectors) > max_vectors:
-                    edge_vectors = edge_vectors[:max_vectors]
+                if possible_centroids:
+                    scene_with_instances= cv2.cvtColor(scene_img,cv2.COLOR_GRAY2BGR)
 
-                scene_with_instances = cv2.cvtColor(scene_img, cv2.COLOR_GRAY2BGR)
-                for point in possible_centroids:
-                    x, y = int(point[0]), int(point[1])
-                    w, h = product_img.shape[::-1]
-                    cv2.rectangle(scene_with_instances, (x, y), (x + w, y + h), (0, 255, 0), 2)
+                    for centroid_pos in possible_centroids:
+                        x, y = centroid_pos
+                        w, h = product_img.shape[::-1]
+                        cv2.rectangle(scene_with_instances, (x-w //2 ,y-h// 2),(x+w// 2, y+h //2 ) , (0, 255, 0), 2)
+                    
+                    cv2.imshow('Scene with instances', scene_with_instances)
+                    cv2.waitKey(0)
+                    cv2.destroyAllWindows()
+                else: 
+                    print(f"detection fail")
 
-                cv2.imshow('Scene with instances', scene_with_instances)
-                cv2.waitKey(0)
-                cv2.destroyAllWindows()
-
-                if prod_path in scene_count:
-                    scene_count[prod_path]['n_instance'] += 1
-                else:
-                    scene_count[prod_path] = {
-                        'n_instance': 1,
-                        'centroid': centroid,
-                        'edge_vectors': edge_vectors
-                    }
-
-            else:
-                print(f"Not enough good matches for product {prod_path} in scene {scene_path}")
-
+                    #update
+                    if prod_path in scene_count:
+                        scene_count[prod_path]['n_instance'] += 1
+                    else:
+                        if len(edge_vectors)>max_vectors:
+                            edge_vectors=edge_vectors[:max_vectors]
+                        scene_count[prod_path] = {
+                            'n_instance': 1,
+                            'centroid': centroid,
+                            'edge_vectors': edge_vectors
+                        }
+                    print(f"numero istanze trovate {scene_count}")
         counts[scene_path] = scene_count
 
     return counts
@@ -113,7 +108,7 @@ def find_instances(scene_paths, product_paths, threshold=0.75, min_matches=150, 
 scene_paths = ['object_detection_project/scenes/m1.png', 'object_detection_project/scenes/m2.png', 'object_detection_project/scenes/m3.png', 'object_detection_project/scenes/m4.png', 'object_detection_project/scenes/m5.png']
 product_paths = ['object_detection_project/models/0.jpg', 'object_detection_project/models/1.jpg', 'object_detection_project/models/11.jpg', 'object_detection_project/models/19.jpg', 'object_detection_project/models/24.jpg', 'object_detection_project/models/26.jpg', 'object_detection_project/models/25.jpg']
 
-counts = find_instances(scene_paths, product_paths, threshold=0.75, min_matches=150, max_vectors=5)
+counts = find_instances(scene_paths, product_paths, threshold=0.75, min_matches=200, max_vectors=10)
 
 # Print results
 for scene_path, scene_count in counts.items():

@@ -38,12 +38,13 @@ def find_instances(scenes,model_images):
         # read scene image file and compute keypoints and SIFT descriptor
         scene_img = cv.imread(constants.SCENES_PATH +'/' + scene, cv.IMREAD_GRAYSCALE)
         keypoints_scene, descriptors_scene = sift.detectAndCompute(scene_img, None)
-        
-        for model in models:
+        print(f"Scene: {scene}")
 
+        for model in models:
+            
             compute_ght_SIFT(model=model,target_keypoints=keypoints_scene,target_descriptors=descriptors_scene,target_image_size=scene_img.shape)
 
-
+            
 
             ########################OLD
             ## filter correspondencies based on distance thresholding
