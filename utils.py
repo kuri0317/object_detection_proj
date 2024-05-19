@@ -2,9 +2,9 @@ import cv2 as cv
 import constants
 import numpy as np
 
-def getModelKeypointsDescriptors(models_imgs):
+def getModelKeypointsDescriptors(models_imgs:list) -> list:
     """
-    Loop trough model image names array and compute keypoints SIFT descriptors vectors and centroid
+    Loop trough model image names array and compute keypoints SIFT descriptors edge_vectors and centroid
 
     Parameters:
         model_imgs: array of image names in the constants.MODELS_PATH directory
@@ -15,6 +15,7 @@ def getModelKeypointsDescriptors(models_imgs):
                 "model_img":model_img opencv image,
                 "centroid":centroid computed,
                 "vectors":vectors computed,
+                "edge_vectors":edge_vectors computed,
                 "model_name":model_img_name name of the image in the constants.MODELS_PATH directory
     """
     models= []
@@ -34,6 +35,10 @@ def getModelKeypointsDescriptors(models_imgs):
 
         # compute vectors from keypoints to barycenter
         vectors = [kp.pt - centroid for kp in keypoints]
+        centroid = np.array((np.mean([keypoint.pt[0] for keypoint in keypoints]),np.mean([keypoint.pt[1] for keypoint in keypoints])))
+
+        # compute vectors from keypoints to barycenter
+        edge_vectors = [centroid -keypoint.pt for keypoint in keypoints]
 
         models.append({
                 "keypoints":keypoints,

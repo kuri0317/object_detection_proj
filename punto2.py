@@ -3,117 +3,88 @@ import cv2 as cv
 import constants
 from collections import defaultdict
 from utils import  getModelKeypointsDescriptors
+from ght_sift import  generalized_hough_transform
+import argparse
 
-def generalized_hough_transform(model, scene_img, threshold=0.75):
+# parameter parser function
+def getParams():
+    parser = argparse.ArgumentParser(prog='object_detection_project',description='box detection project',epilog='credits carnivuth,kuri')
+    parser.add_argument('-t','--threshold',default='0.5',help='thrashold for ratio test',type=float)
+    parser.add_argument('-m','--minMatches',default='200',help='minimum number of matches for detecting the model in the target image',type=int)
+    return parser.parse_args()
+
+def find_instances(scene_paths, product_paths, threshold=constants.THRESHOLD, min_matches=constants.MIN_MATCHES):
     """
-    Compute ght alghorithm using SIFT descriptors
+    find instances of the model images in the scene images using GHT and SIFT descriptors
 
     Parameters:
-    model: dict object as the output of getModelKeypointsDescriptors()
-    scene_img: path to a scene in the constants.SCENE_PATH directory
+    scene_paths: image names in the constants.SCENES_PATH directory
+    product_paths: image names in the constants.MODELS_PATH directory 
+    threshold=0.75 threshold for the ratio test
+    min_matches=200: minimum number of mathces that need to be found in a scene
     """
 
-    # Step 2: Compute keypoints and descriptors for the scene image
-    sift = cv.SIFT_create()
-    keypoints_scene, descriptors_scene = sift.detectAndCompute(scene_img,None)
-
-    # Step 3: Match descriptors between model and scene
-    bf = cv.BFMatcher(cv.NORM_L2)
-    matches = bf.knnMatch(model['descriptors'], descriptors_scene, k=2)
-    
-    good_matches = []
-    for m, n in matches:
-        if m.distance < threshold * n.distance:
-            good_matches.append(m)
-    
-    print(f"Number of good matches: {len(good_matches)}")
-
-    if len(good_matches) == 0:
-        return None, 0
-
-    # Step 4: Accumulator for votes
-
-    accumulator = defaultdict(int)
-    
-    for match in good_matches:
-        model_idx = match.queryIdx
-        scene_idx = match.trainIdx
-        
-        model_kp = model['keypoints'][model_idx]
-        scene_kp = keypoints_scene[scene_idx]
-        
-        model_vector = model['vectors'][model_idx]
-        scale = scene_kp.size / model_kp.size
-        rotated_vector = scale * model_vector
-        
-        scene_centroid = np.array(scene_kp.pt) - rotated_vector
-        accumulator[tuple(scene_centroid)] += 1
-
-    # Step 5: Find the position with the highest votes
-    if accumulator:
-        max_votes = max(accumulator.values())
-        possible_centroids = [pos for pos, votes in accumulator.items() if votes == max_votes]
-
-        return possible_centroids, max_votes
-    else:
-        return None, 0
-
-def find_instances(scene_paths, product_paths, threshold=0.75, min_matches=150, max_vectors=5):
     counts = {}
+
+    # OFFLINE PHASE: compute keypoint,descriptors,vectors of the model images
     models = getModelKeypointsDescriptors(product_paths)
-
-
     
+    # ONLINE PHASE: run object detection on the scene images with the GHT + SIFT pipeline
     for scene_path in scene_paths:
-        scene_img = cv.imread(constants.SCENES_PATH + '/' + scene_path, cv.IMREAD_GRAYSCALE)
+
         scene_count = {}
 
+        # read scene image
+        scene_img = cv.imread(constants.SCENES_PATH + '/' + scene_path, cv.IMREAD_GRAYSCALE)
+
         for model in models:
-            possible_centroids, max_votes = generalized_hough_transform(model, scene_img, threshold)
+            
+            # compute scale between model image and scene image
+            scale_w = scene_img.shape[0] /model['model_img'].shape[0]
+            scale_h = scene_img.shape[1]/ model['model_img'].shape[1]
 
-            if max_votes >= min_matches:
+            # run the GHT + SIFT on the scene image
+            possible_centroids, max_votes, scene_keypoints, scene_descriptors,matches= generalized_hough_transform(model, scene_img, threshold,min_matches)
 
-                if len(model['vectors']) > max_vectors:
-                    model['vectors'] = model['vectors'][:max_vectors]
+            if  possible_centroids != None :
 
                 scene_with_instances = cv.cvtColor(scene_img, cv.COLOR_GRAY2BGR)
-                #print(possible_centroids)
-                for point in possible_centroids:
-                    x, y = int(point[0]), int(point[1])
-                    w, h = model['model_img'].shape[::-1]
-                    cv.rectangle(scene_with_instances, (x, y), (x + w, y + h), (0, 255, 0), 2)
 
-                cv.imshow('Scene with instances', scene_with_instances)
+                # draw bounding box for each possible centroid
+                for centroid_pos in possible_centroids:
+                    center_x, center_y = centroid_pos
+                    w, h =  model['model_img'].shape[::-1]
+                    w = w * scale_w
+                    h = h * scale_h
+                    starting_point= (int(center_x-(w/2)),int(center_y-(h/2)))
+                    ending_point= (int(center_x+(w/2)),int(center_y+(h/2)))
+                    cv.rectangle(scene_with_instances,starting_point,ending_point,(0, 255, 0), 2)
+                    final_image=cv.drawMatches(model['model_img'],model['keypoints'],scene_with_instances,scene_keypoints,matches,None)
+                
+                cv.imshow('Scene with instances', final_image)
                 cv.waitKey(0)
                 cv.destroyAllWindows()
 
-                if prod_path in scene_count:
-                    scene_count[prod_path]['n_instance'] += 1
+                # update count of instances
+                if model['model_name'] in scene_count:
+                    scene_count[model['model_name']]['n_instance'] += 1
                 else:
-                    scene_count[prod_path] = {
+                    scene_count[model['model_name']] = {
                         'n_instance': 1,
                         'centroid': model['centroid'],
                         'vectors': model['vectors']
                     }
 
-            else:
-                print(f"Not enough good matches for product {model['model_name']} in scene {scene_path}")
 
+                print(f"numero istanze trovate {scene_count}")
         counts[scene_path] = scene_count
 
     return counts
 
-# Example usage
+# main
 scene_paths = ['m1.png', 'm2.png', 'm3.png', 'm4.png', 'm5.png']
 product_paths = ['0.jpg', '1.jpg', '11.jpg', '19.jpg', '24.jpg', '26.jpg', '25.jpg']
 
-counts = find_instances(scene_paths, product_paths, threshold=0.75, min_matches=150, max_vectors=5)
+args = getParams()
+counts = find_instances(scene_paths, product_paths, args.threshold, args.minMatches)
 
-# Print results
-for scene_path, scene_count in counts.items():
-    print(f"Scene: {scene_path}")
-    for prod_path, data in scene_count.items():
-        print(f"Product: {prod_path}")
-        print(f"Instances found: {data['n_instance']}")
-        print(f"Product centroid: {data['centroid']}")
-        print(f"Edge vectors: {data['edge_vectors']}")
