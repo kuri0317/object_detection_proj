@@ -1,6 +1,4 @@
-import numpy as np
 import cv2
-import matplotlib.pyplot as plt
 from utils import getModelKeypointsDescriptors
 import constants
 
@@ -55,9 +53,10 @@ for scene_img_path in scene_paths:
         # Filtra i match basati sulla distanza tra i due match più vicini (ratio test)
         good_matches = []
         for m, n in matches:
-            if m.distance < constants.GOOD_MATCH_THRESHOLD * n.distance:
+            if m.distance < constants.THRESHOLD * n.distance:
                 good_matches.append(m)
         
+        # print matches
         #img_matches = cv2.drawMatches(model["model_img"], model["keypoints"], scene_img, keypoints_scene, good_matches, None, flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
         #cv2.imshow('Matches', img_matches)
         #cv2.waitKey(0)
