@@ -9,8 +9,8 @@ import argparse
 # parameter parser function
 def getParams():
     parser = argparse.ArgumentParser(prog='object_detection_project',description='box detection project',epilog='credits carnivuth,kuri')
-    parser.add_argument('-t','--threshold',default='0.5',help='thrashold for ratio test',type=float)
-    parser.add_argument('-m','--minMatches',default='200',help='minimum number of matches for detecting the model in the target image',type=int)
+    parser.add_argument('-t','--threshold',default=constants.THRESHOLD,help='thrashold for ratio test',type=float)
+    parser.add_argument('-m','--minMatches',default=constants.MIN_MATCHES,help='minimum number of matches for detecting the model in the target image',type=int)
     return parser.parse_args()
 
 def find_instances(scene_paths, product_paths, threshold=constants.THRESHOLD, min_matches=constants.MIN_MATCHES):
