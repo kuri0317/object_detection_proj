@@ -61,22 +61,21 @@ def find_instances(scene_paths, product_paths, threshold=constants.THRESHOLD, mi
                     cv.rectangle(scene_with_instances,starting_point,ending_point,(0, 255, 0), 2)
                     final_image=cv.drawMatches(model['model_img'],model['keypoints'],scene_with_instances,scene_keypoints,matches,None)
                 
+                    # update count of instances
+                    if model['model_name'] in scene_count:
+                        scene_count[model['model_name']]['n_instance'] += 1
+                    else:
+                        scene_count[model['model_name']] = {
+                            'n_instance': 1,
+                            #'centroid': model['centroid'],
+                            #'vectors': model['vectors']
+                        }
                 cv.imshow('Scene with instances', final_image)
                 cv.waitKey(0)
                 cv.destroyAllWindows()
 
-                # update count of instances
-                if model['model_name'] in scene_count:
-                    scene_count[model['model_name']]['n_instance'] += 1
-                else:
-                    scene_count[model['model_name']] = {
-                        'n_instance': 1,
-                        'centroid': model['centroid'],
-                        'vectors': model['vectors']
-                    }
 
-
-                print(f"numero istanze trovate {scene_count}")
+        print(f"numero istanze trovate {scene_count}")
         counts[scene_path] = scene_count
 
     return counts
