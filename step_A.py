@@ -67,9 +67,9 @@ for scene_img_path in scene_paths:
         
 
         if len(good_matches) >= min_match_threshold:
-            print(f"instance {model["model_name"]} found")
+            print(f"instance {model['model_name']} found")
         else:
-            print(f"instance {model["model_name"]} not found")
+            print(f"instance {model['model_name']} not found")
 
 
 
