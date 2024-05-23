@@ -6,9 +6,12 @@ def getModelKeypointsDescriptors(models_imgs:list) -> list:
     """
     Loop trough model image names array and compute keypoints SIFT descriptors edge_vectors and centroid
 
-    Parameters:
+    Parameters
+    ----------
         model_imgs: array of image names in the constants.MODELS_PATH directory
-    Returns:
+
+    Returns
+    -------
         models: array of dicts described as follows
                 "keypoints":keypoints detected,
                 "descriptors":descriptors computed,
