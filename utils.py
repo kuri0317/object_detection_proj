@@ -40,6 +40,7 @@ def getModelKeypointsDescriptors(models_imgs:list) -> list:
         vectors = [kp.pt - centroid for kp in keypoints]
         centroid = np.array((np.mean([keypoint.pt[0] for keypoint in keypoints]),np.mean([keypoint.pt[1] for keypoint in keypoints])))
 
+        kp_model_angle = np.asarray([k.angle for k in keypoints])
         # compute vectors from keypoints to barycenter
         edge_vectors = [centroid -keypoint.pt for keypoint in keypoints]
 

@@ -39,6 +39,7 @@ for scene_img_path in scene_paths:
     # Carica l'immagine di test
     scene_img = cv2.imread(constants.SCENES_PATH +'/'+  scene_img_path, cv2.IMREAD_GRAYSCALE)
 
+
     # keypoints e descrizioni scene_img
     sift = cv2.SIFT_create()
     keypoints_scene, descriptors_scene = sift.detectAndCompute(scene_img, None)
@@ -57,16 +58,17 @@ for scene_img_path in scene_paths:
                 good_matches.append(m)
         
         # print matches
-        #img_matches = cv2.drawMatches(model["model_img"], model["keypoints"], scene_img, keypoints_scene, good_matches, None, flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
-        #cv2.imshow('Matches', img_matches)
-        #cv2.waitKey(0)
-        #cv2.destroyAllWindows()
+        img_matches = cv2.drawMatches(model["model_img"], model["keypoints"], scene_img, keypoints_scene, good_matches, None, flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
+        cv2.imshow('Matches', img_matches)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
 
         # numero di match trovati per coppia 
         
 
         if len(good_matches) >= min_match_threshold:
             print(f"instance {model['model_name']} found")
+            
         else:
             print(f"instance {model['model_name']} not found")
 

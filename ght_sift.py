@@ -5,7 +5,6 @@ import constants
 from collections import defaultdict
 from numpy.core.multiarray import ndarray
 
-
 def generalized_hough_transform(model: dict, scene_img: ndarray, threshold=constants.THRESHOLD, min_matches=constants.MIN_MATCHES):
     """
     Compute ght alghorithm using SIFT descriptors
@@ -50,7 +49,8 @@ def generalized_hough_transform(model: dict, scene_img: ndarray, threshold=const
         scene_kp = keypoints_scene[scene_idx]
         
         model_vector = model['vectors'][model_idx]
-
+        
+        #kp_scene_angle = np.asarray([k.angle for k in kp_scene])
         # compute the scale between the model and the scene 
         scale = scene_kp.size / model_kp.size
         #scale = 1
