@@ -62,9 +62,9 @@ def find_instances(scene_paths, product_paths, threshold=constants.THRESHOLD, mi
         for model in models:
             results =  generalized_hough_transform(model, scene_img, threshold, min_matches)
             if results != None:
-                print(f'model :{model._model_name}')
-                print(f'number of instances found :{len(results.centroids)}')
-                print(f'max_votes:{results.max_score}')
+                print(f'    model :{model._model_name}')
+                print(f'    number of instances found :{len(results.centroids)}')
+                print(f'    max_votes:{results.max_score}')
 
                 # compute scale between model image and scene image
                 #scale_w = scene_img.shape[0] /model._model_img.shape[0]
@@ -79,6 +79,7 @@ def find_instances(scene_paths, product_paths, threshold=constants.THRESHOLD, mi
                 #display_results(scene_img, model, results.matches , results.scene_descriptors, bbox_props_list, matchesMask)
                 #print(f'numero istanze trovate con box e ransac:{scene_count}')
         #counts[scene_path] = scene_count
+        print(f"-------------------------")
 
     return counts
 
