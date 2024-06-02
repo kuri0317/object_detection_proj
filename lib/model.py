@@ -9,6 +9,24 @@ class Model:
     _vectors: list
     _model_name: str
 
+    @staticmethod
+    def get_models(models_imgs:list[str]) -> list['Model']:
+        """
+        Loop trough model image names array and compute keypoints SIFT descriptors edge_vectors and centroid
+
+        Parameters
+        ----------
+            model_imgs: array of image names in the constants.MODELS_PATH directory
+
+        Returns
+        -------
+            models: list[Model]
+               Models object extracted from the model image
+        """
+        models= []
+        for model_img_name in models_imgs: models.append(Model(model_name=model_img_name))
+        return models
+
     def __init__(self,model_name: str):
         """
         create the model object SIFT descriptors edge_vectors and centroid of the models_img path
