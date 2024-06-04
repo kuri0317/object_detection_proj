@@ -16,6 +16,7 @@ def printCentroids(sceneAnalisys: SceneAnalisys):
         finalImg = np.copy(sceneAnalisys.scene)
         for centroid in modelFound.centroids:
             finalImg=cv.circle(finalImg,(int(centroid[0]),int(centroid[1])),radius=30,color=(0,0,255))
+        cv.imshow('model image', modelFound.model._model_img)
         cv.imshow('detect instance', finalImg)
         cv.waitKey(0)
         cv.destroyAllWindows()
