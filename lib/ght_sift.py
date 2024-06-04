@@ -13,7 +13,7 @@ class ModelFound:
     '''
     model: Model
     n_instances: int
-    centroids: list
+    centroids: list[np.ndarray]
     matches: list
 
     def __init__(self,model: Model,n_instances: int, matches: list , centroids: list ):
@@ -27,6 +27,7 @@ class SceneAnalisys:
     '''
     Output class for find instances process
     '''
+
     scene_name: str
     scene: np.ndarray
     model_instances: list[ModelFound]
@@ -41,6 +42,7 @@ class GhtOutput:
     '''
     Output class for ght process
     '''
+
     centroids: list[np.ndarray]
     scene: np.ndarray
     max_score: int
@@ -168,24 +170,6 @@ def find_instances(scene_paths, product_paths, threshold=constants.THRESHOLD, mi
                 #        scene_count[model._model_name] = {'n_instance': 1}
 
                 #display_results(scene_img, model, results.matches , results.scene_descriptors, bbox_props_list, matchesMask)
-                #print(f'numero istanze trovate con box e ransac:{scene_count}')
         results.append(scene_analisys)
 
     return results
-
-def display_results(scene_img, model, matches, scene_keypoints, bbox_props_list, matchesMask):
-
-    instance_count= len(bbox_props_list)
-    scene_with_instances= cv.cvtColor(scene_img, cv.COLOR_GRAY2BGR)
-
-    for bbox in bbox_props_list:
-        corners= np.int32(bbox['corners'])
-        if bbox['valid_bbox']:
-            cv.polylines(scene_with_instances, [corners], True, (0,255,0),2)
-
-    final = cv.drawMatches(model._model_img, model._keypoints, scene_with_instances, scene_keypoints, matches, None, matchesMask= matchesMask)
-
-    print (f'number of instances found with RANSAC: {instance_count}')
-    cv.imshow('detect instance', final)
-    cv.waitKey(0)
-    cv.destroyAllWindows()
