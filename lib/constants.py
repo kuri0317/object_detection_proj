@@ -1,5 +1,6 @@
 THRESHOLD = 0.73
 MIN_MATCHES= 200
-SCENES_PATH ="object_detection_project/scenes"
-MODELS_PATH="object_detection_project/models"
+SCENES_PATH ="dataset/scenes"
+MODELS_PATH="dataset/models"
 FLANN_INDEX_KDTREE = 1
+CELL_SIZE = 10

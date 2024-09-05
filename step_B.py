@@ -1,3 +1,4 @@
+#!/usr/bin/python
 import lib.constants as constants
 from lib.ght_sift import  find_instances
 from lib.cli import getParams
