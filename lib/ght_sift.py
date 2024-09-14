@@ -3,6 +3,7 @@ import cv2 as cv
 import lib.constants as constants
 import dataclasses
 import lib.accumulator as accumulator
+from lib.bbox import Bbox
 from lib.model import Model
 
 @dataclasses.dataclass
@@ -14,6 +15,7 @@ class ModelFound:
     n_instances: int
     centroids: list[np.ndarray]
     matches: list
+    bboxes: list[Bbox]
 
     def __init__(self,model: Model,n_instances: int, matches: list , centroids: list ):
         self.model= model
@@ -114,8 +116,7 @@ def generalized_hough_transform(model: Model, scene_img: np.ndarray, threshold=c
         scaled_vector = scale * model_vector
 
         scene_centroid =np.array(scene_kp.pt) - scaled_vector
-        #print(f'scene centroid value after module operation {scene_centroid} for model {model._model_name}')
-        acc.castVote(scene_centroid)
+        acc.castVote(scene_centroid,scene_kp)
 
         # Find the maximum votes in the accumulator
         results.max_score,results.centroids= acc.getMax()
@@ -158,19 +159,10 @@ def find_instances(scene_paths, product_paths, threshold=constants.THRESHOLD, mi
             if ghtOutput!= None:
                 print(f"max number of votes {ghtOutput.max_score} for model {model._model_name}")
                 modelFound = ModelFound(model,len(ghtOutput.centroids),centroids=ghtOutput.centroids,matches=ghtOutput.matches)
+                modelFound.bboxes=Bbox.find_bboxes(model,ghtOutput.scene_keypoints,ghtOutput.centroids,ghtOutput.matches )
                 scene_analisys.model_instances.append(modelFound)
 
-                # compute scale between model image and scene image
-                #scale_w = scene_img.shape[0] /model._model_img.shape[0]
-                #scale_h = scene_img.shape[1]/ model._model_img.shape[1]
 
-                #for bbox_props in bbox_props_list:
-                #    if model._model_name in scene_count:
-                #        scene_count[model._model_name]['n_instance'] += 1
-                #    else:
-                #        scene_count[model._model_name] = {'n_instance': 1}
-
-                #display_results(scene_img, model, results.matches , results.scene_descriptors, bbox_props_list, matchesMask)
         results.append(scene_analisys)
 
     return results

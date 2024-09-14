@@ -2,7 +2,7 @@
 import lib.constants as constants
 from lib.ght_sift import  find_instances
 from lib.cli import getParams
-from lib.print_utils import printCentroids
+from lib.print_utils import printSceneAnalisys
 
 # main
 scene_paths = [constants.SCENES_PATH+'/m1.png', constants.SCENES_PATH+'/m2.png', constants.SCENES_PATH+'/m3.png', constants.SCENES_PATH+'/m4.png', constants.SCENES_PATH+'/m5.png']
@@ -18,4 +18,4 @@ for result in results:
         print(f'    number of instances found :{model.n_instances}')
         print(f'    centroids :{model.centroids}')
     print('---------------------------------')
-    printCentroids(result)
+    printSceneAnalisys(result)
