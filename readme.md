@@ -2,11 +2,36 @@
 
 object detection for meal boxes based on generalized hough transform with SIFT descriptors
 
+## HOW TO RUN
+
+- clone repository
+
+```bash
+git clone https://github.com/kuri0317/object_detection_proj
+```
+
+- create venv and install dependencies
+
+```bash
+cd object_detection_proj
+python -m venv env
+source env/bin/activate
+pip install -r requirements.txt
+```
+
+- run the tasks
+
+```bash
+# run first step
+python step_A.py
+python step_B.py
+```
+
 ## REQUIREMENTS
 
 Object detection techniques based on computer vision can be deployed in super market scenarios for the creation of a system capable of recognizing products on store shelves. Given the image of a store shelf, such a system should be able identify the different products present therein and may be deployed, e.g. to help visually impaired costumers or to automate some common store management tasks (e.g. detect low in stock or misplaced products).
 
-### TASK 
+### TASK
 
 Develop a computer vision system that, given a reference image for each product, is able to identify boxes of cereals of different brands from one picture of a store shelf. For each type of product displayed in the shelf the system should report:
 
@@ -18,7 +43,7 @@ For example, as output of the above image the system should print:
 
 ```
 Product 0 - 2 instance found:
-Instance 1 {position: (256,328), width: 57px, height: 80px}
+Istance 1 {position: (256,328), width: 57px, height: 80px}
 Instance 2 {position: (311,328), width: 57px, height: 80px}
 Product 1 – 1 instance found:
 ```
