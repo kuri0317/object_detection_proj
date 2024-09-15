@@ -40,7 +40,6 @@ class Bbox:
         self._d1 = max(d1, d2)
         self._d2 = min(d1, d2)
 
-
     @staticmethod
     def find_bboxes(model: Model, scene_kp:np.ndarray, centroids: np.ndarray, matches: np.ndarray, max_distortion=1.4, bbox_overlap_threshold=0.5):
         '''
@@ -71,19 +70,13 @@ class Bbox:
             src_points= np.float32(src_points).reshape(-1,1,2)
             dst_points= np.float32(dst_points).reshape(-1,1,2)
 
-            M,_= cv.findHomography(src_points, dst_points, cv.RANSAC ) #RANSAC
+            if len(src_points) >= 4 and len(dst_points) >= 4:
 
-            bbox_transformed = bbox.transform_box(M)
-
-            #valid_shape = bbox_transformed.valid_bbox_shape(max_distortion)
-
-            #if valid_shape:
-            bbox_props_list.append(bbox_transformed)
-
+                M,_= cv.findHomography(src_points, dst_points, cv.RANSAC )
+                bbox_transformed = bbox.transform_box(M)
+                bbox_props_list.append(bbox_transformed)
 
         return bbox_props_list
-
-
 
     def transform_box(self,M:np.ndarray  ):
         '''

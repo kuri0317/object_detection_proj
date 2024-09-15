@@ -1,9 +1,6 @@
 import numpy as np
 import dataclasses
-# accumulator is an image (numpy array with extra dimension for number of votes
-# votes are casted in the exact coordinates,
-# the getMax scans the image and counts the votes in a subsection of the image of cell_size dim
-# accumulator as a bidimensional array of the same size of the image, initialized with zeroes, vote casted in the exact coordinates, and than aggregates with the
+from lib import constants as c
 
 @dataclasses.dataclass
 class Accumulator:
@@ -33,14 +30,14 @@ class Accumulator:
                 numpy array with the centroid coordinates
 
         """
+        # cast vote by resizing the coordinates based on the cell size, try/except needed for out of bound votes
         try:
-            self.acc_array[int(centroid[1]/self.cell_size),int(centroid[0]/self.cell_size)]+=1
-            #self.acc_array[int(centroid[1]/self.cell_size),int(centroid[0]/self.cell_size),1].append(keypoint)
-            self.voters_array[int(centroid[1]/self.cell_size),int(centroid[0]/self.cell_size)].append(keypoint)
+            self.acc_array[int(centroid[1]//self.cell_size),int(centroid[0]//self.cell_size)]+=1
+            self.voters_array[int(centroid[1]//self.cell_size),int(centroid[0]//self.cell_size)].append(keypoint)
         except IndexError:
             print(f"invalid index {int(centroid[1])}:{int(centroid[0])}")
 
-    def  getMax(self):
+    def  getMax(self,values_from_max=c.VALUES_FROM_MAX):
         """
         Get centroid with the max number of votes
 
@@ -53,13 +50,14 @@ class Accumulator:
 
         """
         centroids=[]
-        coordinates=np.where(self.acc_array==np.max(self.acc_array))
-        i = 0
-        while i<len(coordinates[0]):
-            if len(self.voters_array[coordinates[0][i]][coordinates[1][i]]) >0:
-                print(f"asdrubale{self.voters_array[coordinates[0][i]][coordinates[1][i]]}")
-            centroids.append([coordinates[1][i]*self.cell_size,coordinates[0][i]*self.cell_size,self.voters_array[coordinates[0][i]][coordinates[1][i]]])
-            i+=1
 
+        # get max of accumulator and values under max as set in constants
         max_value= np.max(self.acc_array)
+        coordinates=np.where(self.acc_array==max_value)
+        for i in range(values_from_max):
+            coordinates+=np.where(self.acc_array==(max_value-i))
+
+        for i in range(len(coordinates[0])):
+            centroids.append([coordinates[1][i]*self.cell_size,coordinates[0][i]*self.cell_size,self.voters_array[coordinates[0][i]][coordinates[1][i]]])
+
         return max_value,centroids

@@ -65,9 +65,9 @@ def generalized_hough_transform(model: Model, scene_img: np.ndarray, threshold=c
             dict object as the output of getModelKeypointsDescriptors()
         scene_img: nd.array
             image of a scene where to looking for mathces
-        threshold: float default=0.75
+        threshold: float
             threshold for the ratio test
-        min_matches: int default=200
+        min_matches: int
             minimum number of mathces that need to be found in a scene
     Returns
     -----------
@@ -115,11 +115,11 @@ def generalized_hough_transform(model: Model, scene_img: np.ndarray, threshold=c
         scale = scene_kp.size / model_kp.size
         scaled_vector = scale * model_vector
 
-        scene_centroid =np.array(scene_kp.pt) - scaled_vector
+        scene_centroid =scene_kp.pt - scaled_vector
         acc.castVote(scene_centroid,scene_kp)
 
-        # Find the maximum votes in the accumulator
-        results.max_score,results.centroids= acc.getMax()
+    # Find the maximum votes in the accumulator
+    results.max_score,results.centroids= acc.getMax()
 
 
     return results
@@ -149,7 +149,6 @@ def find_instances(scene_paths, product_paths, threshold=constants.THRESHOLD, mi
     # ONLINE PHASE: run object detection on the scene images with the GHT + SIFT pipeline
     for scene_path in scene_paths:
 
-        print(f"processing scene {scene_path}")
         # read scene image
         scene_img = cv.imread(scene_path, cv.IMREAD_GRAYSCALE)
         scene_analisys = SceneAnalisys(scene_name=scene_path,scene=scene_img)
@@ -157,7 +156,6 @@ def find_instances(scene_paths, product_paths, threshold=constants.THRESHOLD, mi
         for model in models:
             ghtOutput=  generalized_hough_transform(model, scene_img, threshold, min_matches)
             if ghtOutput!= None:
-                print(f"max number of votes {ghtOutput.max_score} for model {model._model_name}")
                 modelFound = ModelFound(model,len(ghtOutput.centroids),centroids=ghtOutput.centroids,matches=ghtOutput.matches)
                 modelFound.bboxes=Bbox.find_bboxes(model,ghtOutput.scene_keypoints,ghtOutput.centroids,ghtOutput.matches )
                 scene_analisys.model_instances.append(modelFound)
