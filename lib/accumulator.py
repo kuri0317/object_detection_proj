@@ -1,6 +1,5 @@
 import numpy as np
 import dataclasses
-from lib import constants as c
 
 @dataclasses.dataclass
 class Accumulator:
@@ -35,9 +34,10 @@ class Accumulator:
             self.acc_array[int(centroid[1]//self.cell_size),int(centroid[0]//self.cell_size)]+=1
             self.voters_array[int(centroid[1]//self.cell_size),int(centroid[0]//self.cell_size)].append(keypoint)
         except IndexError:
-            print(f"invalid index {int(centroid[1])}:{int(centroid[0])}")
+            #print(f"invalid index {int(centroid[1])}:{int(centroid[0])}")
+            pass
 
-    def  getMax(self,values_from_max=c.VALUES_FROM_MAX):
+    def  getMax(self,values_from_max):
         """
         Get centroid with the max number of votes
 

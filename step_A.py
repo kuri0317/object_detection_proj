@@ -3,8 +3,23 @@ import lib.constants as constants
 from lib.model import *
 
 # model images
-scene_paths = [constants.SCENES_PATH + '/e1.png', constants.SCENES_PATH +'/e2.png', constants.SCENES_PATH +'/e3.png', constants.SCENES_PATH +'/e4.png', constants.SCENES_PATH +'/e5.png']
-product_paths = [constants.MODELS_PATH + '/0.jpg', constants.MODELS_PATH +'/1.jpg', constants.MODELS_PATH +'/11.jpg', constants.MODELS_PATH +'/19.jpg', constants.MODELS_PATH +'/24.jpg', constants.MODELS_PATH +'/26.jpg', constants.MODELS_PATH +'/25.jpg']
+scene_paths = [
+    constants.SCENES_PATH + '/e1.png',
+    constants.SCENES_PATH +'/e2.png',
+    constants.SCENES_PATH +'/e3.png',
+    constants.SCENES_PATH +'/e4.png',
+    constants.SCENES_PATH +'/e5.png'
+]
+
+product_paths = [
+    constants.MODELS_PATH + '/0.jpg',
+    constants.MODELS_PATH +'/1.jpg',
+    constants.MODELS_PATH +'/11.jpg',
+    constants.MODELS_PATH +'/19.jpg',
+    constants.MODELS_PATH +'/24.jpg',
+    constants.MODELS_PATH +'/26.jpg',
+    constants.MODELS_PATH +'/25.jpg'
+]
 
 models = Model.get_models(product_paths)
 
