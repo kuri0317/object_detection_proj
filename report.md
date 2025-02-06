@@ -36,7 +36,7 @@ Again  project is divided in a 2 step approach where in the first phase model ke
 
 The accumulator is scanned searching for local maximums, and voters and coordinates are returned, The computed results are used to build bounding boxes inside the scene image using homographies
 
-## CONCLUSIONS
+## Conclusions
 
 To get better results from the GHT algorithm accumulator cell size and neighborhood of the local maximum search algorithm need to be accurately tuned to increase robustness w.r.t noise
 
