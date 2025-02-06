@@ -1,4 +1,5 @@
 import numpy as np
+from scipy.ndimage import minimum_filter,maximum_filter, label
 import dataclasses
 
 @dataclasses.dataclass
@@ -37,7 +38,7 @@ class Accumulator:
             #print(f"invalid index {int(centroid[1])}:{int(centroid[0])}")
             pass
 
-    def  getMax(self,values_from_max):
+    def  getMax(self,neighborhood_size):
         """
         Get centroid with the max number of votes
 
@@ -49,15 +50,24 @@ class Accumulator:
                 the most voted cell in the array
 
         """
+
+
         centroids=[]
 
-        # get max of accumulator and values under max as set in constants
-        max_value= np.max(self.acc_array)
-        coordinates=np.where(self.acc_array==max_value)
-        for i in range(values_from_max):
-            coordinates+=np.where(self.acc_array==(max_value-i))
+        data_max = maximum_filter(self.acc_array, neighborhood_size)
+        maxima = (self.acc_array == data_max)
+        maxima_thresholded = self.acc_array > 6
+        labeled, _ = label(maxima_thresholded & maxima)
+        max_voted_cells = np.column_stack(np.where(labeled > 0))
 
-        for i in range(len(coordinates[0])):
-            centroids.append([coordinates[1][i]*self.cell_size,coordinates[0][i]*self.cell_size,self.voters_array[coordinates[0][i]][coordinates[1][i]]])
+        for centroid in max_voted_cells:
 
-        return max_value,centroids
+            centroids.append(
+                [
+                    centroid[1]*self.cell_size,
+                    centroid[0]*self.cell_size,
+                    self.voters_array[centroid[0],centroid[1]]
+                ]
+            )
+
+        return 0,centroids

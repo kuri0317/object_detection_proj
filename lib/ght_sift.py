@@ -54,7 +54,7 @@ class GhtOutput:
         self.scene= scene
         self.matches = []
 
-def generalized_hough_transform(model: Model, scene_img: np.ndarray, threshold, min_matches,cell_size,valuesFromMax):
+def generalized_hough_transform(model: Model, scene_img: np.ndarray, threshold, min_matches,cell_size,nbSize):
     """
     Compute ght alghorithm using SIFT descriptors
 
@@ -118,12 +118,12 @@ def generalized_hough_transform(model: Model, scene_img: np.ndarray, threshold, 
         acc.castVote(scene_centroid,scene_kp)
 
     # Find the maximum votes in the accumulator
-    results.max_score,results.centroids= acc.getMax(values_from_max=valuesFromMax)
+    results.max_score,results.centroids= acc.getMax(nbSize)
 
 
     return results
 
-def find_instances(scene_paths, product_paths, threshold, min_matches,cell_size,valuesFromMax):
+def find_instances(scene_paths, product_paths, threshold, min_matches,cell_size,nbSize):
     """
     find instances of the model images in the scene images using GHT and SIFT descriptors
 
@@ -153,7 +153,7 @@ def find_instances(scene_paths, product_paths, threshold, min_matches,cell_size,
         scene_analisys = SceneAnalisys(scene_name=scene_path,scene=scene_img)
 
         for model in models:
-            ghtOutput=  generalized_hough_transform(model, scene_img, threshold, min_matches,cell_size,valuesFromMax)
+            ghtOutput=  generalized_hough_transform(model, scene_img, threshold, min_matches,cell_size,nbSize)
             if ghtOutput!= None:
                 modelFound = ModelFound(model,len(ghtOutput.centroids),centroids=ghtOutput.centroids,matches=ghtOutput.matches)
                 modelFound.bboxes=Bbox.find_bboxes(model,ghtOutput.scene_keypoints,ghtOutput.centroids,ghtOutput.matches )

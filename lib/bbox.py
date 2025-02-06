@@ -73,8 +73,9 @@ class Bbox:
             if len(src_points) >= 4 and len(dst_points) >= 4:
 
                 M,_= cv.findHomography(src_points, dst_points, cv.RANSAC )
-                bbox_transformed = bbox.transform_box(M)
-                bbox_props_list.append(bbox_transformed)
+                if M is not None:
+                    bbox_transformed = bbox.transform_box(M)
+                    bbox_props_list.append(bbox_transformed)
 
         return bbox_props_list
 

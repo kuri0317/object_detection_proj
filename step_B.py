@@ -36,10 +36,10 @@ def getParams():
         type=int
     )
     parser.add_argument(
-        '-v',
-        '--valuesFromMax',
-        default=constants.VALUES_FROM_MAX,
-        help='number of values lower than max to consider when computing the most voted centroid in the ght process',
+        '-n',
+        '--nbSize',
+        default=constants.NEIGHBOORHOOD_SIZE,
+        help='size of neighboorhood for local maxima search in accumulator array',
         type=int
     )
     return parser.parse_args()
@@ -66,7 +66,7 @@ product_paths = [
 # READ PARAMS
 args =getParams()
 
-results = find_instances(scene_paths, product_paths, args.threshold, args.minMatches,args.cellSize,args.valuesFromMax)
+results = find_instances(scene_paths, product_paths, args.threshold, args.minMatches,args.cellSize,args.nbSize)
 
 for result in results:
     print(f'scene:{result.scene_name}')
