@@ -7,6 +7,6 @@ BUILDDIR = ./build
 clean:
 	rm -rf $(BUILDDIR)
 
-build: $(patsubst %.mmd,%.png,$(wildcard *.mmd))
+build: clean $(patsubst %.mmd,%.png,$(wildcard *.mmd))
 
 .PHONY: build clean
