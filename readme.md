@@ -1,6 +1,6 @@
 # OBJECT DETECTION PROJECT
 
-object detection for meal boxes based on generalized hough transform with SIFT descriptors
+object detection for meal boxes based on generalized hough transform with SIFT descriptors, project report can be found [here](./report.md)
 
 ## HOW TO RUN
 
