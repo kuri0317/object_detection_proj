@@ -1,5 +1,5 @@
 import numpy as np
-from scipy.ndimage import minimum_filter,maximum_filter, label
+from scipy.ndimage import maximum_filter, label
 import dataclasses
 
 @dataclasses.dataclass
@@ -15,6 +15,7 @@ class Accumulator:
         self.cell_size = cell_size
         self.acc_array= np.zeros((image.shape[0]//self.cell_size,image.shape[1]//self.cell_size))
         self.voters_array= np.empty((image.shape[0]//self.cell_size,image.shape[1]//self.cell_size),dtype='O')
+
         for i in range(self.voters_array.shape[0]):
             for j in range(self.voters_array.shape[1]):
                 self.voters_array[i][j]=[]
@@ -35,7 +36,6 @@ class Accumulator:
             self.acc_array[int(centroid[1]//self.cell_size),int(centroid[0]//self.cell_size)]+=1
             self.voters_array[int(centroid[1]//self.cell_size),int(centroid[0]//self.cell_size)].append(keypoint)
         except IndexError:
-            #print(f"invalid index {int(centroid[1])}:{int(centroid[0])}")
             pass
 
     def  getMax(self,neighborhood_size):
@@ -54,12 +54,14 @@ class Accumulator:
 
         centroids=[]
 
+        # find local maxima in the accumulator array
         data_max = maximum_filter(self.acc_array, neighborhood_size)
         maxima = (self.acc_array == data_max)
         maxima_thresholded = self.acc_array > 6
         labeled, _ = label(maxima_thresholded & maxima)
         max_voted_cells = np.column_stack(np.where(labeled > 0))
 
+        # construct output
         for centroid in max_voted_cells:
 
             centroids.append(

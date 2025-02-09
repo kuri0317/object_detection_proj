@@ -11,6 +11,7 @@ scene_paths = [
     constants.SCENES_PATH +'/e5.png'
 ]
 
+# product images
 product_paths = [
     constants.MODELS_PATH + '/0.jpg',
     constants.MODELS_PATH +'/1.jpg',
@@ -21,6 +22,7 @@ product_paths = [
     constants.MODELS_PATH +'/25.jpg'
 ]
 
+# offline phase compute model keypoint and descriptors
 models = Model.get_models(product_paths)
 
 for scene_img_path in scene_paths:
@@ -48,6 +50,7 @@ for scene_img_path in scene_paths:
         cv2.waitKey(0)
         cv2.destroyAllWindows()
 
+        # discard models with threshold on number of matches
         if len(good_matches) >= constants.STEP_A_MIN_MATCHES:
             print(f"instance {model._model_name} found")
 

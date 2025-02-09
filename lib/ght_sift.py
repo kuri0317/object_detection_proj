@@ -5,6 +5,8 @@ import lib.accumulator as accumulator
 from lib.bbox import Bbox
 from lib.model import Model
 
+# dataclasses for functions output
+# ------------------------------
 @dataclasses.dataclass
 class ModelFound:
     '''
@@ -53,6 +55,7 @@ class GhtOutput:
     def __init__(self,scene: np.ndarray):
         self.scene= scene
         self.matches = []
+# ------------------------------
 
 def generalized_hough_transform(model: Model, scene_img: np.ndarray, threshold, min_matches,cell_size,nbSize):
     """
@@ -120,7 +123,6 @@ def generalized_hough_transform(model: Model, scene_img: np.ndarray, threshold, 
     # Find the maximum votes in the accumulator
     results.max_score,results.centroids= acc.getMax(nbSize)
 
-
     return results
 
 def find_instances(scene_paths, product_paths, threshold, min_matches,cell_size,nbSize):
@@ -152,13 +154,15 @@ def find_instances(scene_paths, product_paths, threshold, min_matches,cell_size,
         scene_img = cv.imread(scene_path, cv.IMREAD_GRAYSCALE)
         scene_analisys = SceneAnalisys(scene_name=scene_path,scene=scene_img)
 
+        # run ght for all models in all scenes
         for model in models:
             ghtOutput=  generalized_hough_transform(model, scene_img, threshold, min_matches,cell_size,nbSize)
             if ghtOutput!= None:
+
                 modelFound = ModelFound(model,len(ghtOutput.centroids),centroids=ghtOutput.centroids,matches=ghtOutput.matches)
+                # find bounding boxes on target image
                 modelFound.bboxes=Bbox.find_bboxes(model,ghtOutput.scene_keypoints,ghtOutput.centroids,ghtOutput.matches )
                 scene_analisys.model_instances.append(modelFound)
-
 
         results.append(scene_analisys)
 

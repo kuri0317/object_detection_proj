@@ -22,7 +22,6 @@ pip install -r requirements.txt
 - run the tasks
 
 ```bash
-# run first step
 python step_A.py
 python step_B.py
 ```

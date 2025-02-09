@@ -75,7 +75,8 @@ class Bbox:
                 M,_= cv.findHomography(src_points, dst_points, cv.RANSAC )
                 if M is not None:
                     bbox_transformed = bbox.transform_box(M)
-                    bbox_props_list.append(bbox_transformed)
+                    if bbox_transformed.valid_bbox_shape():
+                        bbox_props_list.append(bbox_transformed)
 
         return bbox_props_list
 
